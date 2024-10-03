@@ -1,42 +1,40 @@
-import tweepy
+#@title Twitter Auth Token
+
+twitter_auth_token = 'ab8539f6b28f1cfbc4892941b27c58e3c2e5ba2e' 
+
+# Install Node.js (because tweet-harvest built using Node.js)
+!sudo apt-get update
+!sudo apt-get install -y ca-certificates curl gnupg
+!sudo mkdir -p /etc/apt/keyrings
+!curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+
+!NODE_MAJOR=20 && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+!sudo apt-get update
+!sudo apt-get install nodejs -y
+
+!node -v
+
+# Crawl Data
+
+filename = 'fore.csv'
+search_keyword = 'Fore Coffee since:2023-10-03 until:2024-10-03 lang:id'
+limit = 100
+
+!npx -y tweet-harvest@2.6.1 -o "{filename}" -s "{search_keyword}" --tab "LATEST" -l {limit} --token {twitter_auth_token}
+
 import pandas as pd
-from key import consumer_key, consumer_secret, access_key, access_secret
 
-# Twitter API credentials
-consumer_key = "CONSUMER_KEY"
-consumer_secret = "CONSUMER_SECRET"
-access_key = "ACCESS_KEY"
-access_secret = "ACCESS_SECRET"
+# Specify the path to your CSV file
+file_path = f"tweets-data/{filename}"
 
-#pass twitter credentials to tweepy
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret, access_key, access_secret)
+# Read the CSV file into a pandas DataFrame
+df = pd.read_csv(file_path, delimiter=",")
 
-#instantiating tweepy
-api = tweepy.API(auth, wait_on_rate_limit=True)
+# Display the DataFrame
+df
 
-search_query = "dove -filter:retweets"
-tweet_counts = 100
+# Cek jumlah data yang didapatkan
 
-# gathering tweets
-tweets = tweepy.Cursor(api.search, q=search_query, lang="id", tweet_mode='extended').items(tweet_counts)
-
-# save tweets to a list
-tweet_data = []
-for tweet in tweets:
-    tweet_data.append({
-        "created_at" : tweet.created_at,
-        "username" : tweet.user.screen_name,
-        "text" : tweet.full_text,
-        "retweet_count" : tweet.retweet_count,
-        "favorite_count" : tweet.favorite_count,
-        "location" : tweet.user.location
-    })
-
-print("Total tweets fetched:", len(tweet_data))
-
-# convert list to dataframe
-tweet_df = pd.DataFrame(tweet_data)
-
-# save dataframe to csv
-tweet_df.to_csv("tweets.csv", index=False, encoding='utf-8')
-print("Data saved to tweets.csv")
+num_tweets = len(df)
+print(f"Jumlah tweet dalam dataframe adalah {num_tweets}.")
