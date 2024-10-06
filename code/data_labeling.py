@@ -1,9 +1,13 @@
 import pandas as pd
 
 # load the data
-df = pd.read_csv('data/fore_cleaned.csv')
+filename='kopken_cleaned.csv'
+file_path = f'data/{filename}'
+df = pd.read_csv(file_path)
 
+#-----------------------------------------
 # sentiment analysis using vaderSentiment
+#-----------------------------------------
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 #initialize the analyzer
 analyzer = SentimentIntensityAnalyzer()
@@ -23,10 +27,7 @@ def categorize_sentiment(compound):
 
 df['sentiment_label'] = df['sentiment'].apply(categorize_sentiment)
 
-# sentiment analysis using Transformers
-from transformers import pipeline
-# Load pre-trained model for sentiment analysis
-sentiment_analyzer = pipeline("sentiment-analysis")
-
-# analyze sentiment
-df['sentiment_transformers'] = df['full_text'].apply(lambda x: sentiment_analyzer(x))
+# save the labeled data
+filename_saved = 'kopken_labeled.csv'
+file_path_saved = f'data/{filename_saved}'
+df.to_csv(file_path_saved, index=False)
