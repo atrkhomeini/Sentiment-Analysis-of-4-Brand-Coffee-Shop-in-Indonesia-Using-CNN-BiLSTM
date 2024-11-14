@@ -1,3 +1,9 @@
 ./code/key/*
 .env
 data/*.csv
+
+
+data-crawling/code/*.docx
+data-crawling/hasil crawling terpisah tanggal/
+data-crawling/hasil crawling tersatu/
+data-crawling/test.ipynb
