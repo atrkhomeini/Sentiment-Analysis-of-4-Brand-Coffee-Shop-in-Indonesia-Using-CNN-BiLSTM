@@ -24,7 +24,13 @@ cursor.close()
 connect.close()
 
 #---------------------------------------------------------------------------------------
-# Sentiment Analysis using GloVe
+# Normalize the texts
+#---------------------------------------------------------------------------------------
+
+
+
+#---------------------------------------------------------------------------------------
+# Tekonize the texts
 #---------------------------------------------------------------------------------------
 
 # tokenize
@@ -33,26 +39,13 @@ import nltk
 from nltk.tokenize import word_tokenize
 
 # download the punkt package
-nltk.download('punkt', download_dir='C:/nltk_data')
+file_data = 'C:/nltk_data'
+nltk.download('all', download_dir=file_data)
 nltk.data.path.clear()
-nltk.data.path.append("C:/nltk_data/tokenizers/punkt")
+nltk.data.path.append(file_data)
 
-try:
-    print(nltk.data.find('tokenizers/punkt'))
-    print("Punkt tokenizer is correctly installed!")
-except LookupError:
-    print("Punkt tokenizer is still missing. Check installation.")
+# Convert texts to lowercase
+df['texts'] = df['texts'].str.lower()
 
-# Define the function
-def nltk_tokenize(text):
-    if isinstance(text, str):  # Ensure text is a string
-        return word_tokenize(text.lower())  # Convert to lowercase and tokenize
-    else:
-        return []  # Return an empty list if the text is not valid
-
-# Apply the function to the correct column (check column name first!)
-if 'texts' in df.columns:  # Ensure the column exists
-    df['tokens'] = df['texts'].apply(nltk_tokenize)
-    print(df[['texts', 'tokens']].head())  # Show results
-else:
-    print("Error: Column 'Text' does not exist in the dataframe!")
+# Tokenize the texts
+df['tokens'] = df['texts'].apply(word_tokenize)
