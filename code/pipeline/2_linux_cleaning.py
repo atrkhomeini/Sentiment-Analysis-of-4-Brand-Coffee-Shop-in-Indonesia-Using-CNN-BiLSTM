@@ -113,6 +113,8 @@ df["Normalized_Text_TextBlob"] = df["Text"].astype(str).apply(normalize_text_tex
 
 #Elimination
 df_normalization = df[['Date','Text', 'Normalized_Text_Spacy']]
+#save normalization
+df_normalization.to_csv('../data/output/normalization.csv', index=False)
 
 #---------------------------------------------------------------------------------------
 # Tekonize the texts
