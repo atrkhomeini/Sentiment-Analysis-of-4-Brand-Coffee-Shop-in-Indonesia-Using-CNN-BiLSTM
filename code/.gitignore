@@ -1,6 +1,7 @@
 ./code/key/*
 .env
 data/*.csv
+data/output/*
 
 
 data-crawling/code/*.docx

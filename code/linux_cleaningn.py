@@ -15,37 +15,133 @@ connect = mysql.connector.connect(
 cursor = connect.cursor()
 
 #fetch data
-query = "SELECT text FROM kopi"
+query = "SELECT Text FROM kopi"
 cursor.execute(query)
 
 # Load data into DataFrame
-df = pd.DataFrame(cursor.fetchall(), columns=['text'])
+df = pd.DataFrame(cursor.fetchall(), columns=['Text'])
 cursor.close()
 connect.close()
 
 #---------------------------------------------------------------------------------------
 # Normalize the texts
 #---------------------------------------------------------------------------------------
+## nltk
 import os
+import re
 import nltk
 from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 file_data = '/home/atrkeffect/nltk_data'
 nltk.download('all', download_dir=file_data)
 nltk.data.path.clear()
 nltk.data.path.append(file_data)
 
-# Convert texts to lowercase
-df['texts'] = df['texts'].str.lower()
+# Initialize Lemmatizer
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words('indonesian'))  # Using Indonesian stopwords
 
+def normalize_text_nltk(text):
+    # Convert to lowercase
+    text = text.lower()
+    
+    # Remove mentions (@username)
+    text = re.sub(r'@\w+', '', text)
+    
+    # Remove URLs
+    text = re.sub(r'http\S+|www.\S+', '', text)
+    
+    # Remove special characters, punctuation, and numbers
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    
+    # Tokenize words
+    words = word_tokenize(text)
+    
+    # Remove stopwords and apply lemmatization
+    words = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
+    
+    # Reconstruct text
+    return ' '.join(words)
+
+# Apply normalization to 'Text' column
+df['Normalized_Text_NLTK'] = df['Text'].astype(str).apply(normalize_text_nltk)
+
+## Sastrawi
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+
+factory = StemmerFactory()
+stemmer = factory.create_stemmer()
+
+def normalize_text_sastrawi(text):
+    text = text.lower()
+    text = stemmer.stem(text)  # Perform stemming
+    return text
+
+df["Normalized_Text_Sastrawi"] = df["Text"].astype(str).apply(normalize_text_sastrawi)
+
+## Spacy
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
+
+def normalize_text_spacy(text):
+    text = text.lower()  # Lowercase
+    doc = nlp(text)
+    words = [token.lemma_ for token in doc if not token.is_stop and token.is_alpha]  # Lemmatize & remove stopwords
+    return " ".join(words)
+
+df["Normalized_Text_Spacy"] = df["Text"].astype(str).apply(normalize_text_spacy)
+
+## TextBlob
+from textblob import TextBlob
+
+def normalize_text_textblob(text):
+    text = text.lower()
+    words = TextBlob(text).words.singularize()  # Lemmatization
+    return " ".join(words)
+
+df["Normalized_Text_TextBlob"] = df["Text"].astype(str).apply(normalize_text_textblob)
+
+#Elimination
+df_normalization = df[['Text', 'Normalized_Text_Spacy']]
 
 #---------------------------------------------------------------------------------------
 # Tekonize the texts
 #---------------------------------------------------------------------------------------
 
 # tokenize
-
-
+def tokenize_text(text):
+    doc = nlp(text)
+    tokens = [token.text for token in doc if token.is_alpha]
+    return tokens
 
 # Tokenize the texts
-df['tokens'] = df['texts'].apply(word_tokenize)
+df_normalization['Tokens'] = df_normalization['Normalized_Text_Spacy'].astype(str).apply(tokenize_text)
+df_tokenization = df_normalization[['Text','Normalized_Text_Spacy', 'Tokens']]
+
+#---------------------------------------------------------------------------------------
+# Stopword Removal
+#---------------------------------------------------------------------------------------
+
+from spacy.lang.id.stop_words import STOP_WORDS  # Indonesian stopwords
+
+def remove_stopwords(tokens):
+    return [word for word in tokens if word.lower() not in STOP_WORDS]
+
+df_tokenization['Tokens_no_stopword'] = df_tokenization['Tokens'].apply(remove_stopwords)
+df_stopword = df_tokenization[['Text', 'Normalized_Text_Spacy', 'Tokens', 'Tokens_no_stopword']]
+
+
+#---------------------------------------------------------------------------------------
+# save seperate file
+#---------------------------------------------------------------------------------------
+
+# save tokens
+df_token = df_stopword[['Text', 'Tokens']]
+df_token.to_csv('data/output/tokens.csv', index=False)
+
+#save token no stopwords
+df_token_no_stopword = df_stopword[['Text', 'Tokens_no_stopword']]
+df_token_no_stopword.to_csv('data/output/tokens_no_stopword.csv', index=False)
