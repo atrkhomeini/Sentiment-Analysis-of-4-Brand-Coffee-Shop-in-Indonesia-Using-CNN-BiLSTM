@@ -15,13 +15,20 @@ connect = mysql.connector.connect(
 cursor = connect.cursor()
 
 #fetch data
-query = "SELECT Text FROM kopi"
+query = "SELECT Date, Text FROM kopi"
 cursor.execute(query)
 
 # Load data into DataFrame
-df = pd.DataFrame(cursor.fetchall(), columns=['Text'])
+df = pd.DataFrame(cursor.fetchall(), columns=['Date','Text'])
 cursor.close()
 connect.close()
+
+# Convert Date column to datetime format
+df['Date'] = pd.to_datetime(df['Date'], errors='coerce')  
+
+# Format the date to "mm/yyyy"
+df['Date'] = df['Date'].dt.strftime('%m/%Y')
+
 
 #---------------------------------------------------------------------------------------
 # Normalize the texts
@@ -105,7 +112,7 @@ def normalize_text_textblob(text):
 df["Normalized_Text_TextBlob"] = df["Text"].astype(str).apply(normalize_text_textblob)
 
 #Elimination
-df_normalization = df[['Text', 'Normalized_Text_Spacy']]
+df_normalization = df[['Date','Text', 'Normalized_Text_Spacy']]
 
 #---------------------------------------------------------------------------------------
 # Tekonize the texts
@@ -119,7 +126,7 @@ def tokenize_text(text):
 
 # Tokenize the texts
 df_normalization['Tokens'] = df_normalization['Normalized_Text_Spacy'].astype(str).apply(tokenize_text)
-df_tokenization = df_normalization[['Text','Normalized_Text_Spacy', 'Tokens']]
+df_tokenization = df_normalization[['Date','Text','Normalized_Text_Spacy', 'Tokens']]
 
 #---------------------------------------------------------------------------------------
 # Stopword Removal
@@ -131,7 +138,7 @@ def remove_stopwords(tokens):
     return [word for word in tokens if word.lower() not in STOP_WORDS]
 
 df_tokenization['Tokens_no_stopword'] = df_tokenization['Tokens'].apply(remove_stopwords)
-df_stopword = df_tokenization[['Text', 'Normalized_Text_Spacy', 'Tokens', 'Tokens_no_stopword']]
+df_stopword = df_tokenization[['Date','Text', 'Normalized_Text_Spacy', 'Tokens', 'Tokens_no_stopword']]
 
 
 #---------------------------------------------------------------------------------------
@@ -139,9 +146,9 @@ df_stopword = df_tokenization[['Text', 'Normalized_Text_Spacy', 'Tokens', 'Token
 #---------------------------------------------------------------------------------------
 
 # save tokens
-df_token = df_stopword[['Text', 'Tokens']]
-df_token.to_csv('data/output/tokens.csv', index=False)
+df_token = df_stopword[['Date','Text', 'Tokens']]
+df_token.to_csv('../data/output/tokens.csv', index=False)
 
 #save token no stopwords
-df_token_no_stopword = df_stopword[['Text', 'Tokens_no_stopword']]
-df_token_no_stopword.to_csv('data/output/tokens_no_stopword.csv', index=False)
+df_token_no_stopword = df_stopword[['Date','Text', 'Tokens_no_stopword']]
+df_token_no_stopword.to_csv('../data/output/tokens_no_stopword.csv', index=False)
