@@ -1,11 +1,12 @@
 import pandas as pd
+from transformers import pipeline
 
-df = pd.read_csv('../data/output/tokens.csv')
+#load pretrained model
+classifier = pipeline('sentiment-analysis', model="W11wo/indonesian-roberta-large-sentiment-classifier")
 
-from textblob import TextBlob
+#load data
+df = pd.read_csv('../../data/output/tokens.csv')
 
-def get_sentiment(text):
-    analysis = TextBlob(text)
-    return analysis.sentiment.polarity
+df['Sentiment'] = df['Text'].apply(lambda x: classifier(x)[0]['label'])
 
-df['Sentiment'] = df['Text'].apply(get_sentiment)
+print("Sentiment analysis completed successfully!")
