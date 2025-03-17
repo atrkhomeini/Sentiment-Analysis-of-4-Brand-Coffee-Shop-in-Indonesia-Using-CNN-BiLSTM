@@ -5,8 +5,8 @@ from transformers import pipeline
 classifier = pipeline('sentiment-analysis', model="W11wo/indonesian-roberta-large-sentiment-classifier")
 
 #load data
-df = pd.read_csv('../../data/output/tokens.csv')
+df = pd.read_csv('../research/tokens_normalized.csv')
 
-df['Sentiment'] = df['Text'].apply(lambda x: classifier(x)[0]['label'])
+df['Sentiment'] = df['Normalized_Text_Slang'].apply(lambda x: classifier(x)[0]['label'])
 
 print("Sentiment analysis completed successfully!")
