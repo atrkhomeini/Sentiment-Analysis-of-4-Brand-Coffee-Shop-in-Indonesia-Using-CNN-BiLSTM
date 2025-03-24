@@ -33,24 +33,19 @@ df['Date'] = df['Date'].dt.strftime('%m/%Y')
 #---------------------------------------------------------------------------------------
 # Normalize the texts
 #---------------------------------------------------------------------------------------
-## nltk
-import os
 import re
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
+import json
+import pandas as pd
 
-file_data = '/home/atrkeffect/nltk_data'
-nltk.download('all', download_dir=file_data)
-nltk.data.path.clear()
-nltk.data.path.append(file_data)
+# Load slang dictionary
+with open ('../assets/NLP_bahasa_resources/combined_slang_words.txt','r', encoding="utf-8") as file:
+    slang_dict = json.load(file)
 
-# Initialize Lemmatizer
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words('indonesian'))  # Using Indonesian stopwords
-
-def normalize_text_nltk(text):
+# Function to clean text
+def normalize_text(text):
+    if pd.isna(text):  # Ensure no None values
+        return ""
+    
     # Convert to lowercase
     text = text.lower()
     
@@ -62,95 +57,24 @@ def normalize_text_nltk(text):
     
     # Remove special characters, punctuation, and numbers
     text = re.sub(r'[^a-zA-Z\s]', '', text)
-    
-    # Tokenize words
-    words = word_tokenize(text)
-    
-    # Remove stopwords and apply lemmatization
-    words = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
-    
-    # Reconstruct text
-    return ' '.join(words)
 
-# Apply normalization to 'Text' column
-df['Normalized_Text_NLTK'] = df['Text'].astype(str).apply(normalize_text_nltk)
+    return text  # Make sure to return the cleaned text!
 
-## Sastrawi
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+# Function to replace slang words
+def normalize_slang(text):
+    if pd.isna(text) or text.strip() == "":  # Prevent NoneType errors
+        return ""
 
-factory = StemmerFactory()
-stemmer = factory.create_stemmer()
+    words = text.split()  # Tokenization using spaces
+    normalized_words = [slang_dict[word] if word in slang_dict else word for word in words]
+    return ' '.join(normalized_words)
 
-def normalize_text_sastrawi(text):
-    text = text.lower()
-    text = stemmer.stem(text)  # Perform stemming
-    return text
+# Apply normalization
+df['Normalized_Text_NLTK'] = df['Text'].astype(str).apply(normalize_text)
+df['Normalized_Text_Slang'] = df['Normalized_Text_NLTK'].apply(normalize_slang)
 
-df["Normalized_Text_Sastrawi"] = df["Text"].astype(str).apply(normalize_text_sastrawi)
-
-## Spacy
-import spacy
-
-nlp = spacy.load("en_core_web_sm")
-
-def normalize_text_spacy(text):
-    text = text.lower()  # Lowercase
-    doc = nlp(text)
-    words = [token.lemma_ for token in doc if not token.is_stop and token.is_alpha]  # Lemmatize & remove stopwords
-    return " ".join(words)
-
-df["Normalized_Text_Spacy"] = df["Text"].astype(str).apply(normalize_text_spacy)
-
-## TextBlob
-from textblob import TextBlob
-
-def normalize_text_textblob(text):
-    text = text.lower()
-    words = TextBlob(text).words.singularize()  # Lemmatization
-    return " ".join(words)
-
-df["Normalized_Text_TextBlob"] = df["Text"].astype(str).apply(normalize_text_textblob)
-
-#Elimination
-df_normalization = df[['Date','Text', 'Normalized_Text_Spacy']]
-#save normalization
-df_normalization.to_csv('../data/output/normalization.csv', index=False)
-
+# Save the final normalized dataset
+path_save = "../data/output"
+df.to_csv(f"{path_save}/2_tokens_normalized.csv", index=False)
+print("Data normalization completed successfully!")
 #---------------------------------------------------------------------------------------
-# Tekonize the texts
-#---------------------------------------------------------------------------------------
-
-# tokenize
-def tokenize_text(text):
-    doc = nlp(text)
-    tokens = [token.text for token in doc if token.is_alpha]
-    return tokens
-
-# Tokenize the texts
-df_normalization['Tokens'] = df_normalization['Normalized_Text_Spacy'].astype(str).apply(tokenize_text)
-df_tokenization = df_normalization[['Date','Text','Normalized_Text_Spacy', 'Tokens']]
-
-#---------------------------------------------------------------------------------------
-# Stopword Removal
-#---------------------------------------------------------------------------------------
-
-from spacy.lang.id.stop_words import STOP_WORDS  # Indonesian stopwords
-
-def remove_stopwords(tokens):
-    return [word for word in tokens if word.lower() not in STOP_WORDS]
-
-df_tokenization['Tokens_no_stopword'] = df_tokenization['Tokens'].apply(remove_stopwords)
-df_stopword = df_tokenization[['Date','Text', 'Normalized_Text_Spacy', 'Tokens', 'Tokens_no_stopword']]
-
-
-#---------------------------------------------------------------------------------------
-# save seperate file
-#---------------------------------------------------------------------------------------
-
-# save tokens
-df_token = df_stopword[['Date','Text', 'Tokens']]
-df_token.to_csv('../data/output/tokens.csv', index=False)
-
-#save token no stopwords
-df_token_no_stopword = df_stopword[['Date','Text', 'Tokens_no_stopword']]
-df_token_no_stopword.to_csv('../data/output/tokens_no_stopword.csv', index=False)

@@ -9,10 +9,10 @@ classifier = pipeline("sentiment-analysis", model=model_name)
 #-----------------------------------------------------------------------------
 #load data tokens
 #-----------------------------------------------------------------------------
-df = pd.read_csv('../research/tokens_normalized.csv')
+df = pd.read_csv('../data/output/2_tokens_normalized.csv')
 
 df['Sentiment'] = df['Normalized_Text_Slang'].apply(lambda x: classifier(x)[0]['label'])
 
 print("Sentiment analysis completed successfully!")
 
-df.to_csv('../research/df_sentiment.csv', index=False)
+df.to_csv('../data/output/3_labeling.csv', index=False)
