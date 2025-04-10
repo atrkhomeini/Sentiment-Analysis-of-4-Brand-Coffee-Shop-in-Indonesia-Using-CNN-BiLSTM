@@ -3,7 +3,8 @@
 data/*.csv
 dump/
 data-crawling/
-
+src/glove/*.txt
+src/NLP_bahasa_resources/*.txt
 
 data-crawling/code/*.docx
 data-crawling/hasil crawling terpisah tanggal/
