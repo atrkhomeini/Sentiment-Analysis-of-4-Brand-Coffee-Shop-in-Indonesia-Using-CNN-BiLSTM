@@ -75,6 +75,6 @@ df['Normalized_Text_Slang'] = df['Normalized_Text_NLTK'].apply(normalize_slang)
 
 # Save the final normalized dataset
 path_save = "../data/output"
-df.to_csv(f"{path_save}/2_tokens_normalized.csv", index=False)
+df.to_csv(f"{path_save}/2_tokens_normalized_1.csv", index=False)
 print("Data normalization completed successfully!")
 #---------------------------------------------------------------------------------------
