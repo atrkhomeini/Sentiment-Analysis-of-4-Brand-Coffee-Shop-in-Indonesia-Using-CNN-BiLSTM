@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv('../data/output/3_labeling.csv')
+df = pd.read_csv('../data/output/4_sentiment_analysis.csv')
 
 # =============================
 # 1. Preprocessing & Tokenizing
