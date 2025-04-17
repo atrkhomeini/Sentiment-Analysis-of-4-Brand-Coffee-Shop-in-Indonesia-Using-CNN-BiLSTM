@@ -4,7 +4,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df_sentiment = pd.read_csv('../data/output/3_labeling_1.csv')
+df_sentiment = pd.read_csv('../data/output/3_labeling_2.csv')
 
 # Extract mentions of each coffee brand in the dataset
 brands = ["tomoro", "point coffee", "fore", "kopi kenangan"]
