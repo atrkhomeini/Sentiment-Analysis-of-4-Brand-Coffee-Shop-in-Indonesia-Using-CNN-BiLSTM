@@ -28,14 +28,14 @@ y_all = le.fit_transform(df['Sentiment'])
 import numpy as np
 
 embedding_index = {}
-with open("../src/glove/glove.6B.100d.txt", encoding='utf8') as f:
+with open("../src/glove/glove.6B.300d.txt", encoding='utf8') as f:
     for line in f:
         values = line.split()
         word = values[0]
         vector = np.asarray(values[1:], dtype='float32')
         embedding_index[word] = vector
 
-embedding_dim = 100
+embedding_dim = 300
 word_index = tokenizer.word_index
 embedding_matrix = np.zeros((len(word_index) + 1, embedding_dim))
 for word, i in word_index.items():
