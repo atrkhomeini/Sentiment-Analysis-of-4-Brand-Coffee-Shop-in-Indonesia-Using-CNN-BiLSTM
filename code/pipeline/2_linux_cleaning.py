@@ -7,7 +7,7 @@ import pandas as pd
 
 connect = mysql.connector.connect(
     host = 'localhost',
-    user = 'axel',
+    user = 'root',
     password = 'Time12:30',
     database = 'tugas_akhir'
 )
@@ -15,7 +15,7 @@ connect = mysql.connector.connect(
 cursor = connect.cursor()
 
 #fetch data
-query = "SELECT Date, Text FROM kopi"
+query = "SELECT dates, texts FROM kopi"
 cursor.execute(query)
 
 # Load data into DataFrame
@@ -38,8 +38,15 @@ import json
 import pandas as pd
 
 # Load slang dictionary
-with open ('../assets/NLP_bahasa_resources/combined_slang_words.txt','r', encoding="utf-8") as file:
-    slang_dict = json.load(file)
+try:
+    with open('../src/NLP_bahasa_resources/combined_slang_words.txt', 'r', encoding="utf-8") as file:
+        slang_dict = json.load(file)
+except FileNotFoundError:
+    print("Error: Slang dictionary file not found. Please check the file path.")
+    slang_dict = {}
+except json.JSONDecodeError:
+    print("Error: Failed to decode JSON from the slang dictionary file.")
+    slang_dict = {}
 
 # Function to clean text
 def normalize_text(text):

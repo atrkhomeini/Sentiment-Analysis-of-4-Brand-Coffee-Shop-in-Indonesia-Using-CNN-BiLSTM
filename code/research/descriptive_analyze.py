@@ -4,7 +4,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df_sentiment = pd.read_csv('../data/output/3_labeling.csv')
+df_sentiment = pd.read_csv('../data/output/3_labeling_1.csv')
 
 # Extract mentions of each coffee brand in the dataset
 brands = ["tomoro", "point coffee", "fore", "kopi kenangan"]
@@ -81,5 +81,7 @@ plt.tight_layout()
 plt.show()
 
 #-----------------------------------------------------------------------------------------
-# Handling imbalanced data
+# save df_for_analysis to csv
 #-----------------------------------------------------------------------------------------
+df_for_analysis.to_csv('../data/output/4_sentiment_analysis.csv', index=False)
+print("Sentiment analysis completed successfully!")
