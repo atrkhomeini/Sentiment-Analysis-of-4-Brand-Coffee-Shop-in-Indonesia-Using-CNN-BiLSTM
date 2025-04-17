@@ -80,6 +80,18 @@ plt.grid(axis="y", linestyle="--", alpha=0.7)
 plt.tight_layout()
 plt.show()
 
+# Plot for combined dataset (df_for_analysis)
+summary_combined = df_for_analysis.groupby(["Brand", "Sentiment"]).size().unstack(fill_value=0)
+
+# Plot
+summary_combined.plot(kind="bar", figsize=(10, 6), colormap="coolwarm", edgecolor="black")
+plt.title("Sentiment Distribution (Combined Dataset)")
+plt.xlabel("Brand")
+plt.ylabel("Tweet Count")
+plt.xticks(rotation=30)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.tight_layout()
+plt.show()
 #-----------------------------------------------------------------------------------------
 # save df_for_analysis to csv
 #-----------------------------------------------------------------------------------------
