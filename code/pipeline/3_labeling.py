@@ -4,7 +4,7 @@ from transformers import pipeline
 model_name = "w11wo/indonesian-roberta-base-sentiment-classifier"
 
 # Initialize the sentiment analysis pipeline
-classifier = pipeline("sentiment-analysis", model=model_name)
+classifier = pipeline("sentiment-analysis", model=model_name,tokenizer=model_name)
 
 #-----------------------------------------------------------------------------
 #load data tokens
