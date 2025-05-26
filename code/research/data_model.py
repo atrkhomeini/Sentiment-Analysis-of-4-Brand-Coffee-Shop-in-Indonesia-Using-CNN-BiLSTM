@@ -70,19 +70,18 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, Bidirectional, LSTM, Dropout, Dense
 from tensorflow.keras.regularizers import l2
 
-def build_model():
+def build_model(cnn_filters, kernel_size, lstm_units, dropout_rate):
     model = Sequential([
         Embedding(input_dim=len(word_index)+1,
                   output_dim=embedding_dim,
                   weights=[embedding_matrix],
                   input_length=MAX_SEQUENCE_LENGTH,
                   trainable=True),
-        Conv1D(filters=128, kernel_size=5, activation='relu'),
+        Conv1D(filters=cnn_filters, kernel_size=kernel_size, activation='relu'),
         MaxPooling1D(pool_size=2),
-        Bidirectional(LSTM(64, return_sequences=True)),
-        Bidirectional(LSTM(32)),
-        Dropout(0.5),
-        Dense(64, activation='relu', kernel_regularizer=l2(0.01)),
+        Bidirectional(LSTM(lstm_units)),
+        Dropout(dropout_rate),
+        Dense(64, activation='relu'),
         Dense(3, activation='softmax')
     ])
     model.compile(loss='sparse_categorical_crossentropy',
@@ -105,7 +104,7 @@ for fold, (train_idx, val_idx) in enumerate(kf.split(X_train_val, y_train_val), 
     X_tr, X_val = X_train_val[train_idx], X_train_val[val_idx]
     y_tr, y_val = y_train_val[train_idx], y_train_val[val_idx]
 
-    model = build_model()
+    model = build_model(128,5,64,0.5)
     model.fit(X_tr, y_tr,
               epochs=10,
               batch_size=32,
@@ -158,3 +157,14 @@ plt.show()
 # Classification Report
 print("Classification Report:\n")
 print(classification_report(y_true_labels, y_pred_labels, target_names=le.classes_))
+
+# Create a DataFrame to compare true labels with predicted labels
+comparison_df = pd.DataFrame({
+    'True Label': y_true_labels,
+    'Predicted Label': y_pred_labels
+})
+
+# Display the first few rows of the DataFrame
+print(comparison_df.head())
+
+comparison_df
