@@ -15,20 +15,36 @@ connect = mysql.connector.connect(
 cursor = connect.cursor()
 
 #fetch data
-query = "SELECT Date, Text FROM kopi"
+query = "SELECT dates, texts FROM coffee_shop ORDER BY dates"
 cursor.execute(query)
 
 # Load data into DataFrame
-df = pd.DataFrame(cursor.fetchall(), columns=['Date','Text'])
+df = pd.DataFrame(cursor.fetchall(), columns=['dates','texts'])
 cursor.close()
 connect.close()
 
 # Convert Date column to datetime format
-df['Date'] = pd.to_datetime(df['Date'], errors='coerce')  
+df['dates'] = pd.to_datetime(df['dates'], errors='coerce')  
 
 # Format the date to "mm/yyyy"
-df['Date'] = df['Date'].dt.strftime('%m/%Y')
+df['dates'] = df['dates'].dt.strftime('%m/%Y')
 
+#----------------------------------------------------------------------------------------
+# Consistency, Missing Values, and Duplicates
+#----------------------------------------------------------------------------------------
+# Rename columns for consistency
+df.rename(columns={'dates': 'Date', 'texts': 'Text'}, inplace=True)
+# Check for missing values
+missing_values = df.isnull().sum()
+print("Missing Values:\n", missing_values)
+# Check for duplicate texts
+duplicate_texts = df['Text'].duplicated().sum()
+print("Duplicate Texts:", duplicate_texts)
+# Remove rows with missing or duplicate texts
+df.dropna(subset=['Text'], inplace=True)
+df.drop_duplicates(subset=['Text'], inplace=True)
+# Reset index after cleaning
+df.reset_index(drop=True, inplace=True)
 
 #---------------------------------------------------------------------------------------
 # Normalize the texts
