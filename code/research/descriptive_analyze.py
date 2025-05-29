@@ -1,99 +1,39 @@
-#------------------------------------------------------------------------------------------------------------------
-# Description: This script is used to analyze the sentiment distribution for each coffee brand in the dataset.
-#------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+# Descriptive Analysis of Labeled Data
+#---------------------------------------------------------------------------------------
 import pandas as pd
+
+df = pd.read_csv('../data/output/indobert_labeled_data.csv')
+
+# Pastikan kolom 'Brand' dan 'Sentiment' ada
+assert 'Brand' in df.columns and 'Label_Bert' in df.columns
+
+#Hitung distribusi sentimen per brand
+summary = df.groupby(['Brand', 'Label_Bert']).size().unstack(fill_value=0)
+
+# Tambahkan persentase dari total tweet per brand
+summary_percent = summary.div(summary.sum(axis=1), axis=0) * 100
+summary_percent = summary_percent.round(2)
+
 import matplotlib.pyplot as plt
 
-df_sentiment = pd.read_csv('../data/output/3_labeling_2.csv')
-
-# Extract mentions of each coffee brand in the dataset
-brands = ["tomoro", "point coffee", "fore", "kopi kenangan"]
-
-# Step 1: Identify rows with multiple brand mentions
-df_sentiment["Brand_Mentioned"] = df_sentiment["Normalized_Text_Slang"].apply(
-    lambda text: [brand for brand in brands if brand in str(text).lower()]
-)
-df_sentiment["Brand_Mention_Count"] = df_sentiment["Brand_Mentioned"].apply(len)
-
-# Option 1: Exclude tweets with 2 or more brand mentions
-df_single_brand = df_sentiment[df_sentiment["Brand_Mention_Count"] == 1].copy()
-
-# Option 2: Split tweets with multiple brand mentions into multiple rows (one per brand)
-multi_brand_rows = df_sentiment[df_sentiment["Brand_Mention_Count"] > 1]
-
-# Create new rows by repeating the tweet for each brand it mentions
-split_rows = []
-for _, row in multi_brand_rows.iterrows():
-    for brand in row["Brand_Mentioned"]:
-        new_row = row.copy()
-        new_row["Normalized_Text_Slang"] = str(new_row["Normalized_Text_Slang"])
-        new_row["Brand_Mentioned"] = [brand]  # now it's single
-        new_row["Brand"] = brand
-        split_rows.append(new_row)
-
-df_split_multi_brand = pd.DataFrame(split_rows)
-
-# Combine both datasets: single-brand tweets + split multi-brand tweets
-df_for_analysis = pd.concat([
-    df_single_brand.assign(Brand=lambda d: d["Brand_Mentioned"].str[0]),  # unwrap single brand
-    df_split_multi_brand
-], ignore_index=True)
-
-#-------------------------------------------------------------------------------------------------------------------------------
-# Plot sentiment distribution for each brand
-#-------------------------------------------------------------------------------------------------------------------------------
-import ast
-# plot for Option 1
-df_single_brand["Brand_Mentioned"] = df_single_brand["Brand_Mentioned"].apply(
-    lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-)
-
-# Ambil brand pertama dari list
-df_single_brand["Brand"] = df_single_brand["Brand_Mentioned"].apply(
-    lambda x: x[0] if isinstance(x, list) and len(x) > 0 else "unknown"
-)
-
-# Group by and count
-summary_single = df_single_brand.groupby(["Brand", "Sentiment"]).size().unstack(fill_value=0)
-
-# Plot
-summary_single.plot(kind="bar", figsize=(10, 6), colormap="viridis", edgecolor="black")
-plt.title("Sentiment Distribution (Single Brand Only)")
+# Bar chart absolute count
+summary.plot(kind='bar', stacked=False, colormap='viridis')
+plt.title("Distribusi Sentimen per Brand")
 plt.xlabel("Brand")
-plt.ylabel("Tweet Count")
-plt.xticks(rotation=30)
-plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.ylabel("Jumlah Tweet")
+plt.legend(title="Sentiment")
+plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
 
-# plot for Option 2
-# Hitung jumlah sentimen per brand
-summary_split = df_split_multi_brand.groupby(["Brand", "Sentiment"]).size().unstack(fill_value=0)
-
-# Plot
-summary_split.plot(kind="bar", figsize=(10, 6), colormap="plasma", edgecolor="black")
-plt.title("Sentiment Distribution (Multi-Brand Tweets Split per Row)")
+# Bar chart percentage
+summary_percent.plot(kind='bar', stacked=False, colormap='plasma')
+plt.title("Persentase Sentimen per Brand")
 plt.xlabel("Brand")
-plt.ylabel("Tweet Count")
-plt.xticks(rotation=30)
-plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.ylabel("Persentase")
+plt.legend(title="Sentiment", loc='upper right')
+plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
 
-# Plot for combined dataset (df_for_analysis)
-summary_combined = df_for_analysis.groupby(["Brand", "Sentiment"]).size().unstack(fill_value=0)
-
-# Plot
-summary_combined.plot(kind="bar", figsize=(10, 6), colormap="coolwarm", edgecolor="black")
-plt.title("Sentiment Distribution (Combined Dataset)")
-plt.xlabel("Brand")
-plt.ylabel("Tweet Count")
-plt.xticks(rotation=30)
-plt.grid(axis="y", linestyle="--", alpha=0.7)
-plt.tight_layout()
-plt.show()
-#-----------------------------------------------------------------------------------------
-# save df_for_analysis to csv
-#-----------------------------------------------------------------------------------------
-df_for_analysis.to_csv('../data/output/4_sentiment_analysis.csv', index=False)
-print("Sentiment analysis completed successfully!")
