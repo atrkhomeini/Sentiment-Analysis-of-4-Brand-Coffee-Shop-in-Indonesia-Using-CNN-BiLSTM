@@ -47,15 +47,22 @@ df.drop_duplicates(subset=['Text'], inplace=True)
 df.reset_index(drop=True, inplace=True)
 
 #---------------------------------------------------------------------------------------
-# Normalize the texts
+# Normalize the texts using both slang and root word dictionaries
 #---------------------------------------------------------------------------------------
 import re
 import json
 import pandas as pd
 
 # Load slang dictionary
-with open ('../assets/NLP_bahasa_resources/combined_slang_words.txt','r', encoding="utf-8") as file:
-    slang_dict = json.load(file)
+try:
+    with open('../src/NLP_bahasa_resources/combined_slang_words.txt', 'r', encoding="utf-8") as slang_file:
+        slang_dict = json.load(slang_file)
+except FileNotFoundError:
+    print("Error: Slang dictionary file not found. Please check the file path.")
+    slang_dict = {}
+except json.JSONDecodeError:
+    print("Error: Failed to decode JSON from the slang dictionary file.")
+    slang_dict = {}
 
 # Function to clean text
 def normalize_text(text):
@@ -71,26 +78,25 @@ def normalize_text(text):
     # Remove URLs
     text = re.sub(r'http\S+|www.\S+', '', text)
     
-    # Remove special characters, punctuation, and numbers
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    # Remove special characters and punctuation but keep numbers
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
 
     return text  # Make sure to return the cleaned text!
 
-# Function to replace slang words
+# Function to replace slang words only
 def normalize_slang(text):
     if pd.isna(text) or text.strip() == "":  # Prevent NoneType errors
         return ""
 
     words = text.split()  # Tokenization using spaces
-    normalized_words = [slang_dict[word] if word in slang_dict else word for word in words]
+    normalized_words = [slang_dict.get(word, word) for word in words]
     return ' '.join(normalized_words)
 
 # Apply normalization
-df['Normalized_Text_NLTK'] = df['Text'].astype(str).apply(normalize_text)
-df['Normalized_Text_Slang'] = df['Normalized_Text_NLTK'].apply(normalize_slang)
+df['Text Normalization'] = df['Text'].astype(str).apply(normalize_text).apply(normalize_slang)
 
-# Save the final normalized dataset
-path_save = "../data/output"
-df.to_csv(f"{path_save}/tokens_normalized.csv", index=False)
 print("Data normalization completed successfully!")
+# Save the final normalized dataset
+path_save = '../data/output'
+df.to_csv(f'{path_save}/normalized_coffee_shop_data.csv', index=False)
 #---------------------------------------------------------------------------------------
