@@ -64,6 +64,14 @@ except json.JSONDecodeError:
     print("Error: Failed to decode JSON from the slang dictionary file.")
     slang_dict = {}
 
+# Load stop words dictionary
+try:
+    with open('../assets/NLP_bahasa_resources/combined_stop_words.txt', 'r', encoding="utf-8") as stop_words_file:
+        stop_words = set(stop_words_file.read().splitlines())
+except FileNotFoundError:
+    print("Error: Stop words dictionary file not found. Please check the file path.")
+    stop_words = set()
+
 # Function to clean text
 def normalize_text(text):
     if pd.isna(text):  # Ensure no None values
@@ -92,8 +100,17 @@ def normalize_slang(text):
     normalized_words = [slang_dict.get(word, word) for word in words]
     return ' '.join(normalized_words)
 
+# Function to remove stop words
+def remove_stop_words(text):
+    if pd.isna(text) or text.strip() == "":  # Prevent NoneType errors
+        return ""
+
+    words = text.split()  # Tokenization using spaces
+    filtered_words = [word for word in words if word not in stop_words]
+    return ' '.join(filtered_words)
+
 # Apply normalization
-df['Text Normalization'] = df['Text'].astype(str).apply(normalize_text).apply(normalize_slang)
+df['Text Normalization'] = df['Text'].astype(str).apply(normalize_text).apply(normalize_slang).apply(remove_stop_words)
 
 print("Data normalization completed successfully!")
 # Save the final normalized dataset
