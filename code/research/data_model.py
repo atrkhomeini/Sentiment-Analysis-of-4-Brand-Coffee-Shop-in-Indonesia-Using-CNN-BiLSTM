@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv('../data/output/4_sentiment_analysis.csv')
+df = pd.read_csv('../data/output/indobert_labeled_data.csv')
 
 # =============================
 # 1. Preprocessing & Tokenizing
@@ -14,13 +14,13 @@ MAX_SEQUENCE_LENGTH = 50
 
 # Tokenizer
 tokenizer = Tokenizer(num_words=MAX_NUM_WORDS, oov_token='<OOV>')
-tokenizer.fit_on_texts(df['Normalized_Text_Slang'])
-sequences = tokenizer.texts_to_sequences(df['Normalized_Text_Slang'])
+tokenizer.fit_on_texts(df['Text'])
+sequences = tokenizer.texts_to_sequences(df['Text'])
 X_all = pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
 
 # Label encoding
 le = LabelEncoder()
-y_all = le.fit_transform(df['Sentiment'])
+y_all = le.fit_transform(df['Label_Bert'])
 
 # =============================
 # 2. Load GloVe & Embedding Matrix
