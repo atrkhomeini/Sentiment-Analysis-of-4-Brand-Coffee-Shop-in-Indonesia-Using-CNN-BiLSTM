@@ -1,19 +1,18 @@
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import pandas as pd
-import re
 
-#---------------------------------------------------------------------------------------------------
-# Set up the web driver and firefox
-#---------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# Set up tools scraping
+#------------------------------------------------------------------------------
 # Path ke GeckoDriver, sesuaikan dengan path di komputermu
 gecko_path = "D:/geckodriver.exe"  # Sesuaikan path ke GeckoDriver
-service = Service(executable_path=gecko_path)
+service = FirefoxService(executable_path=gecko_path)
 
 # Path ke Firefox executable
 firefox_path = "C:/Program Files/Mozilla Firefox/firefox.exe"  # Lokasi Firefox.exe
@@ -23,13 +22,18 @@ options = Options()
 options.binary_location = firefox_path  # Menetapkan lokasi binary Firefox
 options.headless = False  # Set ke True jika Anda tidak ingin membuka jendela browser
 
+#------------------------------------------------------------------------------
+# Fungsi untuk membuat driver Firefox
+#------------------------------------------------------------------------------
 def create_driver():
+    options = Options()
+    options.binary_location = 'C:/Program Files/Mozilla Firefox/firefox.exe'
+    service = FirefoxService(executable_path='D:/geckodriver.exe')
     return webdriver.Firefox(service=service, options=options)
 
-#---------------------------------------------------------------------------------------------------
-# Main function
-#---------------------------------------------------------------------------------------------------
-
+#------------------------------------------------------------------------------
+# Fungsi untuk mendapatkan tweet
+#------------------------------------------------------------------------------
 def get_tweet(element):
     try:
         user = element.find_element(By.XPATH, ".//*[contains(text(), '@')]").text
@@ -67,6 +71,19 @@ def click_retry_button(driver):
         pass
 
 def scrape_tweets(driver):
+    """
+    Scrapes tweets from a Twitter page using a Selenium WebDriver.
+    Args:
+        driver (selenium.webdriver): The Selenium WebDriver instance used to interact with the Twitter page.
+    Returns:
+        tuple: Six lists containing:
+            - user_data (list): Usernames of tweet authors.
+            - text_data (list): Text content of tweets.
+            - date_data (list): Dates of tweets.
+            - tweet_link_data (list): Links to individual tweets.
+            - media_link_data (list): Links to media in tweets (if any).
+            - reply_to_data (list): Information about replies (if any).
+    """
     user_data = []
     text_data = []
     date_data = []
@@ -114,7 +131,7 @@ def scrape_tweets(driver):
     return user_data, text_data, date_data, tweet_link_data, media_link_data, reply_to_data
 
 driver = create_driver()
-web = 'https://x.com/search?q=foodfess2%20kopken%202024%20lang%3Aid%20until%3A2024-07-01%20since%3A2023-07-01&src=typed_query&f=live' # Masukan link yang akan di cari
+web = 'https://x.com/search?q=point%20coffee%20FOODFESS2%20lang%3Aid%20until%3A2024-12-31%20since%3A2024-06-02%20&src=typed_query&f=live' # Masukan link yang akan di cari
 driver.get(web)
 time.sleep(15)
 driver.save_screenshot('screenshot_before_search.png')
@@ -133,12 +150,12 @@ df = pd.DataFrame({
     'Reply To': reply_to_data
 })
 
-print(df)
+#------------------------------------------------------------------------------
+# Proses data
+#------------------------------------------------------------------------------
 
+import re
 
-#---------------------------------------------------------------------------------------------------
-# Extract mentions
-#---------------------------------------------------------------------------------------------------
 def extract_mentions(text):
     mentions = re.findall(r'@(\w+)', text)
     return mentions
@@ -146,7 +163,9 @@ def extract_mentions(text):
 df['Target'] = df['User']
 df['Mentions'] = df['Text'].apply(extract_mentions)
 
-#--------------------------------------------------------------------------------
-# Save the data
-#--------------------------------------------------------------------------------
-df.to_csv('hasil-crawling-kopken.csv', index=False, sep=";")
+#-------------------------------------------------------------------------------
+# Simpan ke dalam CSV
+#-------------------------------------------------------------------------------
+
+# Simpan kedalam csv
+df.to_csv('point-hasil-crawling-1-juni.csv', index=False, sep=";")
