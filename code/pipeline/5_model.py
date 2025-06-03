@@ -3,7 +3,7 @@ import pandas as pd
 df = pd.read_csv('../data/output/indobert_labeled_data.csv')
 
 # =============================
-# 1. Preprocessing & Tokenizing
+# 1. Tokenizing
 # =============================
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
