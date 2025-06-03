@@ -60,4 +60,5 @@ df_result.rename(columns={'label_bert': 'Label_Bert'}, inplace=True)
 # Save the result to a new CSV file
 df_result.to_csv('../data/output/indobert_labeled_data.csv', index=False)
 
-print("Filtered data saved to '../data/output/indobert_labeled_data.csv'")
+print("Filtered data saved to '../data/output/test_indobert_labeled_data.csv'")
+
