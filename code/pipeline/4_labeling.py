@@ -1,7 +1,7 @@
 import pandas as pd
 
 # load the data
-df = pd.read_csv('../data/output/expanded_coffee_shop_data.csv')
+df = pd.read_csv('../data/output/expanded_fore_data.csv')
 
 #-----------------------------------------
 # Labeling Data with BERT and VADER
@@ -51,6 +51,7 @@ plt.show()
 #--------------------------------------------------------------------------------------------------
 # IndoBERT choose the most confident label
 #--------------------------------------------------------------------------------------------------
+
 # Filter the DataFrame to include only relevant columns
 df_result = df_compare[['Date', 'Text', 'Brand', 'label_bert']]
 
