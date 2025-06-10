@@ -12,13 +12,11 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 MAX_NUM_WORDS = 10000
 MAX_SEQUENCE_LENGTH = 50
 
-# Tokenizer
 tokenizer = Tokenizer(num_words=MAX_NUM_WORDS, oov_token='<OOV>')
 tokenizer.fit_on_texts(df['Text'])
 sequences = tokenizer.texts_to_sequences(df['Text'])
 X_all = pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
 
-# Label encoding
 le = LabelEncoder()
 y_all = le.fit_transform(df['Label_Bert'])
 
@@ -64,29 +62,31 @@ X_train_val, X_test, y_train_val, y_test = train_test_split(
     X_all, y_all, test_size=0.1, stratify=y_all, random_state=42)
 
 # =============================
-# 5. Build CNN-BiLSTM Function
+# 5. Build CNN-BiLSTM Model (Sederhana dari GitHub)
 # =============================
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, Bidirectional, LSTM, Dropout, Dense
-from tensorflow.keras.regularizers import l2
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Embedding, Conv1D, GlobalAveragePooling1D, Bidirectional, LSTM, Dropout, Dense, concatenate
 
-def build_model(cnn_filters, kernel_size, lstm_units, dropout_rate):
-    model = Sequential([
-        Embedding(input_dim=len(word_index)+1,
-                  output_dim=embedding_dim,
-                  weights=[embedding_matrix],
-                  input_length=MAX_SEQUENCE_LENGTH,
-                  trainable=True),
-        Conv1D(filters=cnn_filters, kernel_size=kernel_size, activation='relu'),
-        MaxPooling1D(pool_size=2),
-        Bidirectional(LSTM(lstm_units)),
-        Dropout(dropout_rate),
-        Dense(64, activation='relu'),
-        Dense(3, activation='softmax')
-    ])
-    model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
+def build_model(vocab_size, embedding_dim, embedding_matrix, max_len):
+    input_layer = Input(shape=(max_len,), name='text_input')
+    embedding = Embedding(input_dim=vocab_size,
+                          output_dim=embedding_dim,
+                          weights=[embedding_matrix],
+                          input_length=max_len,
+                          trainable=True)(input_layer)
+
+    cnn = Conv1D(128, 5, activation='relu')(embedding)
+    cnn = GlobalAveragePooling1D()(cnn)
+
+    lstm = Bidirectional(LSTM(64))(embedding)
+
+    x = concatenate([cnn, lstm])
+    x = Dropout(0.5)(x)
+    x = Dense(64, activation='relu')(x)
+    output = Dense(3, activation='softmax')(x)
+
+    model = Model(inputs=input_layer, outputs=output)
+    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
 
 # =============================
@@ -104,7 +104,7 @@ for fold, (train_idx, val_idx) in enumerate(kf.split(X_train_val, y_train_val), 
     X_tr, X_val = X_train_val[train_idx], X_train_val[val_idx]
     y_tr, y_val = y_train_val[train_idx], y_train_val[val_idx]
 
-    model = build_model(128,5,64,0.5)
+    model = build_model(len(word_index)+1, embedding_dim, embedding_matrix, MAX_SEQUENCE_LENGTH)
     model.fit(X_tr, y_tr,
               epochs=10,
               batch_size=32,
