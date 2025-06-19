@@ -94,3 +94,28 @@ for brand in brands:
             subset['Cleaned_Text'] = subset['Text'].apply(remove_brand_words)
             generate_wordcloud(subset['Cleaned_Text'], f"{brand.title()} - {sentiment.title()}")
 
+
+#----------------------------------------------------------------------
+# Pengelompokkan aspect
+#----------------------------------------------------------------------
+# Definisikan kata kunci untuk setiap aspek
+produk_keywords = ["rasa", "menu", "variasi", "porsi", "harga", "kopi", "teh", "minum", "enak", "mahal", "murah", "cukup", "lezat", "kualitas", "fresh", "bahan", "resep", "beli"]
+pelayanan_keywords = ["staf", "pegawai", "layan", "service", "ramah", "cepat", "antri", "pelayan", "kasir", "judes","respon", "sopan","admine","admin","barista","baristanya"]
+promosi_keywords = ["promo", "diskon", "gratis", "bundling", "loyalty", "gopay", "voucher", "cashback", "b1g1"]
+
+# Fungsi untuk memetakan aspek berdasarkan kata kunci
+def map_aspect(text):
+    text_lower = str(text).lower()
+    if any(keyword in text_lower for keyword in produk_keywords):
+        return "Produk"
+    elif any(keyword in text_lower for keyword in pelayanan_keywords):
+        return "Pelayanan"
+    elif any(keyword in text_lower for keyword in promosi_keywords):
+        return "Promosi"
+    else:
+        return "Lainnya"
+
+# Terapkan fungsi ke kolom baru
+df["Aspect"] = df["Text"].apply(map_aspect)
+
+df["Aspect"].value_counts().plot(kind='bar', color='skyblue')

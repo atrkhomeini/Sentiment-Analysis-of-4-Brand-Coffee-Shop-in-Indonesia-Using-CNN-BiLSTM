@@ -15,7 +15,7 @@ connect = mysql.connector.connect(
 cursor = connect.cursor()
 
 #fetch data
-query = "SELECT dates, texts FROM coffee_shop ORDER BY dates"
+query = "SELECT dates, texts FROM coffee_shop WHERE LOWER(texts) LIKE '%fore%' ORDER BY dates"
 cursor.execute(query)
 
 # Load data into DataFrame

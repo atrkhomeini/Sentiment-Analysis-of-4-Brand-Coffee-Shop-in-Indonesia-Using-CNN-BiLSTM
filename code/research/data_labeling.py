@@ -10,7 +10,7 @@ from transformers import pipeline
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # IndoBERT classifier
-bert_model = pipeline("sentiment-analysis", model="w11wo/indonesian-roberta-base-sentiment-classifier")
+bert_model = pipeline("text-classification", model="jeanfzr/indo_sentiment_indobertweet")
 
 # VADER
 vader = SentimentIntensityAnalyzer()
@@ -58,6 +58,6 @@ df_result = df_compare[['Date', 'Text', 'Brand', 'label_bert']]
 df_result.rename(columns={'label_bert': 'Label_Bert'}, inplace=True)
 
 # Save the result to a new CSV file
-df_result.to_csv('../data/output/indobert_labeled_data.csv', index=False)
+df_result.to_csv('../data/output/test_indobert_labeled_data.csv', index=False)
 
-print("Filtered data saved to '../data/output/indobert_labeled_data.csv'")
+print("Filtered data saved to '../data/output/test_indobert_labeled_data.csv'")

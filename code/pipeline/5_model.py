@@ -2,6 +2,7 @@ import pandas as pd
 
 df = pd.read_csv('../data/output/indobert_labeled_data.csv')
 
+#split 80 2 >Inject new data for train > hyperparameter tuning > 
 # =============================
 # 1. Tokenizing
 # =============================
@@ -59,7 +60,7 @@ class_weight_dict = dict(enumerate(class_weights))
 from sklearn.model_selection import train_test_split
 
 X_train_val, X_test, y_train_val, y_test = train_test_split(
-    X_all, y_all, test_size=0.1, stratify=y_all, random_state=42)
+    X_all, y_all, test_size=0.2, stratify=y_all, random_state=42)
 
 # =============================
 # 5. Build CNN-BiLSTM Model (Sederhana dari GitHub)
