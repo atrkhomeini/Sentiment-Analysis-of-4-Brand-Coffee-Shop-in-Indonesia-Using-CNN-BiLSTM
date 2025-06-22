@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.utils import resample
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, log_loss
-from keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model
 from keras.layers import Input, Embedding, Conv1D, GlobalAveragePooling1D, Bidirectional, LSTM, Dropout, Dense, concatenate
@@ -113,17 +113,17 @@ def build_model():
     return model
 
 
-'''
+
 # Step 6: Define model builder
 from itertools import product
-def build_model(cnn_filters, kernel_size, lstm_units, dropout_rate):
+def build_model(cnn_filters, kernel_size, lstm_units, dropout_rate, cnn_activation):
     input_layer = Input(shape=(MAX_SEQUENCE_LENGTH,))
     embedding = Embedding(input_dim=len(word_index)+1,
                           output_dim=embedding_dim,
                           weights=[embedding_matrix],
                           input_length=MAX_SEQUENCE_LENGTH,
                           trainable=True)(input_layer)
-    cnn = Conv1D(cnn_filters, kernel_size, activation='relu')(embedding)
+    cnn = Conv1D(cnn_filters, kernel_size, activation=cnn_activation)(embedding)
     cnn = GlobalAveragePooling1D()(cnn)
     lstm = Bidirectional(LSTM(lstm_units))(embedding)
     x = concatenate([cnn, lstm])
@@ -143,7 +143,8 @@ param_grid = {
     'cnn_filters': [32, 64, 128],
     'kernel_size': [3, 5, 7],
     'lstm_units': [32, 64, 128],
-    'dropout_rate': [0.2, 0.3, 0.4]
+    'dropout_rate': [0.2, 0.3, 0.4],
+    'cnn_activation': ['relu', 'sigmoid', 'tanh']
 }
 
 kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -152,15 +153,15 @@ best_params = None
 
 print("Starting Grid Search...\n")
 for params in product(*param_grid.values()):
-    cnn_filters, kernel_size, lstm_units, dropout_rate = params
-    print(f"Testing params: filters={cnn_filters}, kernel={kernel_size}, lstm={lstm_units}, dropout={dropout_rate}")
+    cnn_filters, kernel_size, lstm_units, dropout_rate, cnn_activation = params
+    print(f"Testing params: filters={cnn_filters}, kernel={kernel_size}, lstm={lstm_units}, dropout={dropout_rate}, cnn_activation={cnn_activation}")
     f1_scores = []
 
     for fold, (train_idx, val_idx) in enumerate(kf.split(X_train, y_train), 1):
         X_tr, X_val = X_train[train_idx], X_train[val_idx]
         y_tr, y_val = y_train[train_idx], y_train[val_idx]
 
-        model = build_model(cnn_filters, kernel_size, lstm_units, dropout_rate)
+        model = build_model(cnn_filters, kernel_size, lstm_units, dropout_rate, cnn_activation)
         model.fit(X_tr, y_tr, epochs=10, batch_size=32, verbose=0)
 
         y_pred = model.predict(X_val).argmax(axis=1)
@@ -176,8 +177,7 @@ for params in product(*param_grid.values()):
 
 print("==== Grid Search Complete ====")
 print("Best F1 Score:", best_score)
-print("Best Params (filters, kernel, lstm, dropout):", best_params)
-'''
+print("Best Params (filters, kernel, lstm, dropout, cnn_activation):", best_params)
 # t
 # =============================
 # 9. 5-Fold Cross Validation on Balanced Train Data
