@@ -16,23 +16,27 @@ from keras.layers import Input, Embedding, Conv1D, GlobalAveragePooling1D, Bidir
 # =============================
 # 1. Load Dataset & Label Encode
 # =============================
+'''
 df = pd.read_csv('../data/output/indobert_labeled_data.csv')
 le = LabelEncoder()
 df['Encoded_Label'] = le.fit_transform(df['Label_Bert'])
-
+'''
 # =============================
 # 2. Split 80% Train / 20% Holdout
 # =============================
+'''
 df_train, df_test = train_test_split(
     df, test_size=0.2, stratify=df['Encoded_Label'], random_state=42
 )
 # Save train data for validation
 df_train.to_csv('../data/output/indobert_train.csv', index=False)
-
+'''
 # after validation data train
 df_train = pd.read_excel('../data/data_valid/main_indobert_train.xlsx', sheet_name='data_valid')
+df_test = pd.read_excel('../data/data_valid/main_indobert_train.xlsx', sheet_name='data_test')
 le = LabelEncoder()
 df_train['Encoded_Label_Valid'] = le.fit_transform(df_train['Validation'])
+df_test['Encoded_Label'] = le.transform(df_test['Label_Bert'])
 # =============================
 # 3. Handle Imbalanced Data
 # =============================
@@ -72,7 +76,7 @@ y_test = df_test['Encoded_Label'].values
 # 5. Load GloVe Embedding
 # =============================
 embedding_index = {}
-with open("../src/glove/glove.6B.300d.txt", encoding='utf8') as f:
+with open("/media/atrkeffect/BOS/TA/tweet/code/src/glove/glove.6B.300d.txt", encoding='utf8') as f:
     for line in f:
         values = line.split()
         word = values[0]
@@ -99,11 +103,11 @@ def build_model():
                           weights=[embedding_matrix],
                           input_length=MAX_SEQUENCE_LENGTH,
                           trainable=True)(input_layer)
-    cnn = Conv1D(128, 5, activation='relu')(embedding)
+    cnn = Conv1D(128, 7, activation='relu')(embedding)
     cnn = GlobalAveragePooling1D()(cnn)
     lstm = Bidirectional(LSTM(64))(embedding)
     x = concatenate([cnn, lstm])
-    x = Dropout(0.3)(x)
+    x = Dropout(0.2)(x)
     x = Dense(64, activation='relu')(x)
     output = Dense(3, activation='softmax')(x)
     model = Model(inputs=input_layer, outputs=output)
@@ -112,9 +116,11 @@ def build_model():
                   metrics=['accuracy'])
     return model
 
-
-
-# Step 6: Define model builder
+#============================================================================================================
+# Use if you dont have the best parameters yet
+# ===========================================================================================================
+'''
+# Step 7: Define model builder
 from itertools import product
 def build_model(cnn_filters, kernel_size, lstm_units, dropout_rate, cnn_activation):
     input_layer = Input(shape=(MAX_SEQUENCE_LENGTH,))
@@ -138,7 +144,7 @@ def build_model(cnn_filters, kernel_size, lstm_units, dropout_rate, cnn_activati
 
 from itertools import product
 
-# 7. Grid parameter space
+# Step 8. Grid parameter space
 param_grid = {
     'cnn_filters': [32, 64, 128],
     'kernel_size': [3, 5, 7],
@@ -178,10 +184,11 @@ for params in product(*param_grid.values()):
 print("==== Grid Search Complete ====")
 print("Best F1 Score:", best_score)
 print("Best Params (filters, kernel, lstm, dropout, cnn_activation):", best_params)
-# t
-# =============================
+'''
+
+# ============================================================================
 # 9. 5-Fold Cross Validation on Balanced Train Data
-# =============================
+# ============================================================================
 from sklearn.model_selection import StratifiedKFold
 
 kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -212,4 +219,76 @@ print("Average Recall: {:.2f}%".format(np.mean(recalls) * 100))
 print("Average F1-Score: {:.2f}%".format(np.mean(f1s) * 100))
 print("Average Log Loss: {:.2f}".format(np.mean(losses)))
 
-# apply model in df_test
+# =============================
+# 10. Final Training on Full Train Set & Evaluation on Test Set
+# =============================
+
+# Train Final Model on Balanced Training Set
+model = build_model()
+model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=1)
+
+# Predict on Test Set
+y_pred_proba = model.predict(X_test)
+y_pred = y_pred_proba.argmax(axis=1)
+
+# Decode label integer back to original class
+y_true_labels = le.inverse_transform(y_test)
+y_pred_labels = le.inverse_transform(y_pred)
+
+from sklearn.metrics import classification_report
+
+print("Classification Report (Test Set):\n")
+print(classification_report(y_true_labels, y_pred_labels, target_names=le.classes_))
+
+
+# =============================
+# 11. Visualize Results
+# =============================
+# 1. Confusion Matrix
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+
+# Confusion Matrix
+cm = confusion_matrix(y_true_labels, y_pred_labels, labels=le.classes_)
+
+# Plotting
+plt.figure(figsize=(6, 5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=le.classes_, yticklabels=le.classes_)
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix - Test Set")
+plt.tight_layout()
+plt.show()
+
+# 2. Bar chart akurasi tiap kelas
+import pandas as pd
+
+report = classification_report(y_true_labels, y_pred_labels, target_names=le.classes_, output_dict=True)
+df_report = pd.DataFrame(report).transpose()
+
+# Bar chart F1 per kelas
+ax = df_report.iloc[:-3]['f1-score'].plot(kind='bar', color='skyblue')
+plt.title("F1-Score per Class on Test Set")
+plt.ylabel("F1 Score")
+plt.xticks(rotation=0)
+plt.ylim(0, 1)
+plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+
+# Add data labels above bars
+for p in ax.patches:
+    ax.annotate(f"{p.get_height():.2f}", 
+                (p.get_x() + p.get_width() / 2., p.get_height()), 
+                ha='center', va='bottom', fontsize=10)
+
+plt.tight_layout()
+plt.show()
+
+# save results
+df_test['True Label'] = y_true_labels
+df_test['Predicted Label'] = y_pred_labels
+
+df_test[['Text Normalization', 'True Label', 'Predicted Label']].to_csv(
+    '../data/output/test_predictions.csv', index=False)
+
