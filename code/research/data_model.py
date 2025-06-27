@@ -76,7 +76,7 @@ y_test = df_test['Encoded_Label'].values
 # 5. Load GloVe Embedding
 # =============================
 embedding_index = {}
-with open("/media/atrkeffect/BOS/TA/tweet/code/src/glove/glove.6B.300d.txt", encoding='utf8') as f:
+with open("../src/glove/glove.6B.300d.txt", encoding='utf8') as f:
     for line in f:
         values = line.split()
         word = values[0]
@@ -93,31 +93,9 @@ for word, i in word_index.items():
     if vector is not None:
         embedding_matrix[i] = vector
 
-# =============================
-# 6. Build Model with Best Param
-# =============================
-def build_model():
-    input_layer = Input(shape=(MAX_SEQUENCE_LENGTH,))
-    embedding = Embedding(input_dim=len(word_index)+1,
-                          output_dim=embedding_dim,
-                          weights=[embedding_matrix],
-                          input_length=MAX_SEQUENCE_LENGTH,
-                          trainable=True)(input_layer)
-    cnn = Conv1D(128, 7, activation='relu')(embedding)
-    cnn = GlobalAveragePooling1D()(cnn)
-    lstm = Bidirectional(LSTM(64))(embedding)
-    x = concatenate([cnn, lstm])
-    x = Dropout(0.2)(x)
-    x = Dense(64, activation='relu')(x)
-    output = Dense(3, activation='softmax')(x)
-    model = Model(inputs=input_layer, outputs=output)
-    model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
-    return model
 
 #============================================================================================================
-# Use if you dont have the best parameters yet
+# Use if you dont have the best parameters yet (you can skip this part if you already have the best parameters)
 # ===========================================================================================================
 '''
 # Step 7: Define model builder
@@ -153,7 +131,7 @@ param_grid = {
     'cnn_activation': ['relu', 'sigmoid', 'tanh']
 }
 
-kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 best_score = 0
 best_params = None
 
@@ -185,17 +163,42 @@ print("==== Grid Search Complete ====")
 print("Best F1 Score:", best_score)
 print("Best Params (filters, kernel, lstm, dropout, cnn_activation):", best_params)
 '''
+# =============================
+# 6. Build Model with Best Param
+# =============================
+def build_model():
+    input_layer = Input(shape=(MAX_SEQUENCE_LENGTH,)) # Hasil Tokenisasi
+
+    embedding = Embedding(input_dim=len(word_index)+1, # Mengubah kata menjadi vector embed berdimensi tetap
+                          output_dim=embedding_dim, # outputnya berupa dimensi
+                          weights=[embedding_matrix],
+                          input_length=MAX_SEQUENCE_LENGTH,
+                          trainable=True)(input_layer) # Embedding diperbolehkan untuk menyesuaikan selama training
+    # CNN Layer
+    cnn = Conv1D(128, 7, activation='relu')(embedding) # Mendeteksi fitur lokal dengan 7 frasa, mengekstrak 128 jenis fitur, ReLU mengaktifkan sinyal positif
+    
+    # LSTM Layer
+    # input: Hasil CNN yang masih berformat sekuens (3D tensor)
+    lstm = Bidirectional(LSTM(64))(cnn) # Memahamai urutan kata 2 arah (maju-mundur). Hidden unit: 64 masing-masing arah
+    x = Dropout(0.2)(lstm) # Dropout untuk mengurangi overfitting
+    x = Dense(64, activation='relu')(x) # Fully connected layer dengan 64 neuron, ReLU sebagai aktivasi
+    output = Dense(3, activation='softmax')(x) # Output layer dengan 3 neuron (jumlah kelas), softmax untuk probabilitas kelas
+    model = Model(inputs=input_layer, outputs=output)
+    model.compile(loss='sparse_categorical_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
 
 # ============================================================================
-# 9. 5-Fold Cross Validation on Balanced Train Data
+# 9. 10-Fold Cross Validation on Balanced Train Data
 # ============================================================================
 from sklearn.model_selection import StratifiedKFold
 
-kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 accs, precisions, recalls, f1s, losses = [], [], [], [], []
 
 for fold, (train_idx, val_idx) in enumerate(kf.split(X_train, y_train), 1):
-    print(f"\nFold {fold}/5")
+    print(f"\nFold {fold}/10")
     X_tr, X_val = X_train[train_idx], X_train[val_idx]
     y_tr, y_val = y_train[train_idx], y_train[val_idx]
 
@@ -249,7 +252,6 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
-# Confusion Matrix
 cm = confusion_matrix(y_true_labels, y_pred_labels, labels=le.classes_)
 
 # Plotting
