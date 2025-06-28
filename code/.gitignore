@@ -1,10 +1,14 @@
 ./code/key/*
 .env
-data/*.csv
 dump/
 data-crawling/
 src/glove/*.txt
-data/
+
+
+research/*.csv
+research/*json
+research/*xlsx
+
 
 data-crawling/code/*.docx
 data-crawling/hasil crawling terpisah tanggal/
