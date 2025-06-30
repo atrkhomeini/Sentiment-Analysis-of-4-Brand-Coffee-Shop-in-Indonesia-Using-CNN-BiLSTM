@@ -115,5 +115,6 @@ df['Text Normalization'] = df['Text'].astype(str).apply(normalize_text).apply(no
 print("Data normalization completed successfully!")
 # Save the final normalized dataset
 path_save = '../data/output'
-df.to_csv(f'{path_save}/normalized_coffee_shop_data.csv', index=False)
+df.to_csv(f'{path_save}/normalized.csv', index=False)
+print(f"Normalized data saved to {path_save}/normalized.csv")
 #---------------------------------------------------------------------------------------
