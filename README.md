@@ -24,9 +24,17 @@ This project delivers a comprehensive **sentiment analysis system** targeting cu
 
 ```
 .
-├── .vscode/               # Visual Studio Code settings
-├── code/                  # Core scripts: training, preprocessing, evaluation
+├── data/                  # Datasets for the project
+│   ├── raw/               # Raw, immutable data
+│   └── output/            # Processed data
+├── models/                # Trained and serialized models
+├── notebooks/             # Jupyter notebooks for exploration and analysis
+├── src/                   # Source code
+│   ├── pipeline/          # Data processing and modeling pipeline
+│   ├── scripts/           # Helper scripts
+│   └── main.py            # Main script to run the pipeline
 ├── .gitignore             # Files and folders ignored by Git
+├── README.md              # Project description
 ```
 
 ## 🗃️ Dataset
@@ -48,14 +56,9 @@ cd Sentiment-Analysis-of-4-Brand-Coffee-Shop-in-Indonesia-Using-CNN-BiLSTM
 pip install -r requirements.txt
 ```
 
-### 3. Train the Model
+### 3. Run the Pipeline
 ```bash
-python code/train_model.py
-```
-
-### 4. Evaluate and Visualize Results
-```bash
-python code/evaluate_model.py
+python src/main.py
 ```
 
 ## 🧠 Model Architecture
