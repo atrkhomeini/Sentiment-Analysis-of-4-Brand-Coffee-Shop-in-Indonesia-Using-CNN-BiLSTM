@@ -15,7 +15,7 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support, con
 # 1: Configuration Gemini Model
 #-----------------------------------------------------------------
 # Load API key from YAML file
-with open('../key/key.yml', 'r') as file:
+with open('../../key/key.yml', 'r') as file:
     keys = yaml.safe_load(file)
     GEMINI_API_KEY = keys.get('GEMINI_API_KEY')
 
