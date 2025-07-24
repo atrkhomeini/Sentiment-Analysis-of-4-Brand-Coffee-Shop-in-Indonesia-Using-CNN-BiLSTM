@@ -11,13 +11,13 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from tensorflow.keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model
-from keras.layers import Input, Embedding, Conv1D, GlobalAveragePooling1D, Bidirectional, LSTM, Dropout, Dense, concatenate
+from keras.layers import Input, Embedding, Conv1D, Bidirectional, LSTM, Dropout, Dense
 
 # =============================
 # 1. Load Dataset & Label Encode
 # =============================
-'''
-df = pd.read_excel('../data/output/labeled_n_aspect.xlsx', sheet_name='Sheet1')
+
+df = pd.read_excel('../../notebooks/kopken_tweet_with_predicted_aspect_test.xlsx', sheet_name='Sheet1')
 le = LabelEncoder()
 df['Encoded_Label'] = le.fit_transform(df['Sentimen'])
 
@@ -29,12 +29,12 @@ df_train, df_test = train_test_split(
     df, test_size=0.2, stratify=df['Encoded_Label'], random_state=42
 )
 # Save train data for validation
-df_train.to_excel('../data/output/df_train.xlsx', index=False)
-df_test.to_excel('../data/output/df_test.xlsx', index=False)
-'''
+df_train.to_excel('../../data/output/kopken_df_train.xlsx', index=False)
+df_test.to_excel('../../data/output/kopken_df_test.xlsx', index=False)
+
 # after validation data train
-df_train = pd.read_excel('../data/output/df_train.xlsx', sheet_name='Sheet1')
-df_test = pd.read_excel('../data/output/df_test.xlsx', sheet_name='Sheet1')
+df_train = pd.read_excel('../../data/output/df_train.xlsx', sheet_name='Sheet1')
+df_test = pd.read_excel('../../data/output/df_test.xlsx', sheet_name='Sheet1')
 le = LabelEncoder()
 df_train['Encoded_Label_Valid'] = le.fit_transform(df_train['Validasi Sentimen'])
 df_test['Encoded_Label'] = le.transform(df_test['Sentimen'])
@@ -43,21 +43,23 @@ df_test['Encoded_Label'] = le.transform(df_test['Sentimen'])
 # =============================
 
 # for negative validation, augment the data using synonym augmentation
+# Augment negative sentiment data
 df_neg = df_train[df_train['Validasi Sentimen'] == 'negative'].copy()
 aug = naw.SynonymAug(aug_src='wordnet')
 df_neg['Augmented_Text'] = df_neg['Text Normalization'].apply(lambda x: aug.augment(x))
-df_neg_augmented = df_neg.copy()
-df_neg_augmented['Text Normalization'] = df_neg_augmented['Augmented_Text']
-df_neg_final = pd.concat([df_neg, df_neg_augmented], ignore_index=True)
 
-df_other = df_train[df_train['Validasi Sentimen'] != 'negative']
-df_aug_combined = pd.concat([df_other, df_neg_final], ignore_index=True)
+# Create augmented version and combine
+df_neg_aug = df_neg.copy()
+df_neg_aug['Text Normalization'] = df_neg_aug['Augmented_Text']
+df_combined = pd.concat([df_train, df_neg_aug], ignore_index=True)
 
-max_count = df_aug_combined['Encoded_Label_Valid'].value_counts().max()
+# Balance all sentiment classes
+max_count = df_combined['Encoded_Label_Valid'].value_counts().max()
 df_balanced = pd.concat([
-    resample(sub_df, replace=True, n_samples=max_count, random_state=42)
-    for _, sub_df in df_aug_combined.groupby('Encoded_Label_Valid')
-], ignore_index=True)
+    resample(group, replace=True, n_samples=max_count, random_state=42)
+    for _, group in df_combined.groupby('Encoded_Label_Valid')
+])
+
 
 # for aspects, we will do random oversampling 
 from sklearn.utils import resample
@@ -115,7 +117,7 @@ y_test = df_test['Encoded_Label'].values
 # 5. Load GloVe Embedding
 # =============================
 embedding_index = {}
-with open("../src/glove/glove.6B.300d.txt", encoding='utf8') as f:
+with open("../../src/glove/glove.6B.300d.txt", encoding='utf8') as f:
     for line in f:
         values = line.split()
         word = values[0]
@@ -147,10 +149,9 @@ def build_model(cnn_filters, kernel_size, lstm_units, dropout_rate, cnn_activati
                           input_length=MAX_SEQUENCE_LENGTH,
                           trainable=True)(input_layer)
     cnn = Conv1D(cnn_filters, kernel_size, activation=cnn_activation)(embedding)
-    cnn = GlobalAveragePooling1D()(cnn)
-    lstm = Bidirectional(LSTM(lstm_units))(embedding)
-    x = concatenate([cnn, lstm])
-    x = Dropout(dropout_rate)(x)
+
+    lstm = Bidirectional(LSTM(lstm_units))(cnn)
+    x = Dropout(dropout_rate)(lstm)
     x = Dense(64, activation='relu')(x)
     output = Dense(3, activation='softmax')(x)
     model = Model(inputs=input_layer, outputs=output)
