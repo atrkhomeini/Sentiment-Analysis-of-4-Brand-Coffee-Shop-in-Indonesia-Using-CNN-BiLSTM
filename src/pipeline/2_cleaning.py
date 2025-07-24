@@ -15,7 +15,7 @@ connect = mysql.connector.connect(
 cursor = connect.cursor()
 
 #fetch data
-query = "SELECT dates, texts FROM coffee_shop WHERE LOWER(texts) LIKE '%fore%' ORDER BY dates"
+query = "SELECT dates, texts FROM coffee_shop WHERE LOWER(texts) LIKE '%kopi kenangan%' OR LOWER(texts) LIKE '%kopken%' ORDER BY dates"
 cursor.execute(query)
 
 # Load data into DataFrame
@@ -32,18 +32,10 @@ df['dates'] = df['dates'].dt.strftime('%m/%Y')
 #----------------------------------------------------------------------------------------
 # Consistency, Missing Values, and Duplicates
 #----------------------------------------------------------------------------------------
-# Rename columns for consistency
+# Rename columns and clean data
 df.rename(columns={'dates': 'Date', 'texts': 'Text'}, inplace=True)
-# Check for missing values
-missing_values = df.isnull().sum()
-print("Missing Values:\n", missing_values)
-# Check for duplicate texts
-duplicate_texts = df['Text'].duplicated().sum()
-print("Duplicate Texts:", duplicate_texts)
-# Remove rows with missing or duplicate texts
 df.dropna(subset=['Text'], inplace=True)
 df.drop_duplicates(subset=['Text'], inplace=True)
-# Reset index after cleaning
 df.reset_index(drop=True, inplace=True)
 
 #---------------------------------------------------------------------------------------
@@ -55,7 +47,7 @@ import pandas as pd
 
 # Load slang dictionary
 try:
-    with open('../src/NLP_bahasa_resources/combined_slang_words.txt', 'r', encoding="utf-8") as slang_file:
+    with open('../NLP_bahasa_resources/combined_slang_words.txt', 'r', encoding="utf-8") as slang_file:
         slang_dict = json.load(slang_file)
 except FileNotFoundError:
     print("Error: Slang dictionary file not found. Please check the file path.")
@@ -66,7 +58,7 @@ except json.JSONDecodeError:
 
 # Load stop words dictionary
 try:
-    with open('../assets/NLP_bahasa_resources/combined_stop_words.txt', 'r', encoding="utf-8") as stop_words_file:
+    with open('..//NLP_bahasa_resources/combined_stop_words.txt', 'r', encoding="utf-8") as stop_words_file:
         stop_words = set(stop_words_file.read().splitlines())
 except FileNotFoundError:
     print("Error: Stop words dictionary file not found. Please check the file path.")
@@ -89,32 +81,40 @@ def normalize_text(text):
     # Remove special characters and punctuation but keep numbers
     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
 
+    # Remove emojis
+    text = re.sub(r'[^\x00-\x7F]+', '', text) 
+
     return text  # Make sure to return the cleaned text!
-
-# Function to replace slang words only
-def normalize_slang(text):
-    if pd.isna(text) or text.strip() == "":  # Prevent NoneType errors
-        return ""
-
-    words = text.split()  # Tokenization using spaces
-    normalized_words = [slang_dict.get(word, word) for word in words]
-    return ' '.join(normalized_words)
 
 # Function to remove stop words
 def remove_stop_words(text):
-    if pd.isna(text) or text.strip() == "":  # Prevent NoneType errors
+    if pd.isna(text) or not text.strip():
         return ""
-
-    words = text.split()  # Tokenization using spaces
+    
+    words = text.split()
+    # Remove stop words in one pass
     filtered_words = [word for word in words if word not in stop_words]
     return ' '.join(filtered_words)
+
+
+# Function to replace slang words and remove stop words
+def normalize_slang(text):
+    if pd.isna(text) or not text.strip():
+        return ""
+    
+    words = text.split()
+    # Replace slang and remove stop words in one pass
+    normalized_words = [slang_dict.get(word, word) for word in words if word not in stop_words]
+    return ' '.join(normalized_words)
+
+# Remove the separate remove_stop_words function since it's now combined
 
 # Apply normalization
 df['Text Normalization'] = df['Text'].astype(str).apply(normalize_text).apply(normalize_slang).apply(remove_stop_words)
 
 print("Data normalization completed successfully!")
 # Save the final normalized dataset
-path_save = '../data/output'
-df.to_csv(f'{path_save}/normalized.csv', index=False)
-print(f"Normalized data saved to {path_save}/normalized.csv")
+path_save = '../../data/output'
+df.to_csv(f'{path_save}/kopken_normalized.csv', index=False)
+print(f"Normalized data saved to {path_save}/kopken_normalized.csv")
 #---------------------------------------------------------------------------------------
