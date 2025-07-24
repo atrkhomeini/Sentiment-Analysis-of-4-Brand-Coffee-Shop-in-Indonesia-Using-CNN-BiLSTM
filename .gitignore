@@ -2,3 +2,6 @@ data/data-crawling/
 src/glove
 code/key/key.yml
 key/key.yml
+notebooks/dump
+data/dump
+data/output/sample
