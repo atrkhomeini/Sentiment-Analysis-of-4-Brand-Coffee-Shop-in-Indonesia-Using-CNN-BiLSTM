@@ -71,19 +71,6 @@ def click_retry_button(driver):
         pass
 
 def scrape_tweets(driver):
-    """
-    Scrapes tweets from a Twitter page using a Selenium WebDriver.
-    Args:
-        driver (selenium.webdriver): The Selenium WebDriver instance used to interact with the Twitter page.
-    Returns:
-        tuple: Six lists containing:
-            - user_data (list): Usernames of tweet authors.
-            - text_data (list): Text content of tweets.
-            - date_data (list): Dates of tweets.
-            - tweet_link_data (list): Links to individual tweets.
-            - media_link_data (list): Links to media in tweets (if any).
-            - reply_to_data (list): Information about replies (if any).
-    """
     user_data = []
     text_data = []
     date_data = []
