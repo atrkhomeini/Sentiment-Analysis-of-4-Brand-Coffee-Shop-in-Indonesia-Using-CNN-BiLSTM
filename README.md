@@ -1,8 +1,12 @@
-# 🌟 Sentiment Analysis of Four Coffee Shop Brands in Indonesia Using CNN-BiLSTM
+# 🌟 Analyzing Customer Perceptions of Products and Services at Leading Indonesian Coffee Shops Using CNN-BiLSTM and Zero-Shot Learning
 
 ## 📄 Project Overview
 
 This project delivers a comprehensive **sentiment analysis system** targeting customer opinions about four well-known coffee shop brands in Indonesia: **Fore Coffee, Kopi Kenangan, Point Coffee, and Tomoro Coffee**. Leveraging a deep learning model that combines **Convolutional Neural Networks (CNN)** with **Bidirectional Long Short-Term Memory (BiLSTM)** networks, the system classifies tweets into three sentiment categories: positive, negative, and neutral.
+
+## 🧾 Abstract
+
+The rapid growth of the coffee shop industry in Indonesia has made understanding customer perceptions crucial for maintaining a competitive edge. Social media platforms like Twitter offer rich and dynamic sources of public opinion; however, the unstructured nature of these texts necessitates advanced analytical methods. This study conducts a comparative sentiment analysis of customer perceptions toward two leading coffee shop brands—Fore Coffee and Kopi Kenangan—using Twitter data collected throughout 2024. The methodology integrates a hybrid Convolutional Neural Network–Bidirectional Long Short-Term Memory (CNN-BiLSTM) model for sentiment classification and a Zero-Shot Learning approach with a large language model (LLM) for aspect-based sentiment extraction. A total of 2,277 tweets related to Fore Coffee and 1,593 tweets related to Kopi Kenangan were analyzed. The results indicate a predominantly positive perception for both brands, with Fore Coffee receiving 71.6% positive sentiment and Kopi Kenangan 72.4%. Product quality emerged as the key driver of positive sentiment for both. Nonetheless, strategic differences were identified. Fore Coffee is perceived to offer consistently premium-quality products but is challenged by a perception of high prices. In contrast, Kopi Kenangan is appreciated for affordability and product customization, though concerns arise regarding product consistency and service accuracy. Based on these findings, tailored strategic recommendations are proposed: Fore Coffee should reinforce its value proposition to justify its premium pricing, while Kopi Kenangan is advised to focus on operational standardization and improving service accuracy to sustain its rapid expansion.
 
 ## 🤖 Key Features
 
@@ -19,6 +23,7 @@ This project delivers a comprehensive **sentiment analysis system** targeting cu
 - **TensorFlow / Keras** for deep learning modeling
 - **NLTK, Sastrawi, Spacy, TextBlob** for NLP preprocessing
 - **Matplotlib, Seaborn, WordCloud** for data visualization
+- **Zero-Shot Learning** for aspect extraction
 
 ## 📁 Project Structure
 
